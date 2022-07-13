@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:atom="http://www.w3.org/2005/Atom"
+	xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+	xmlns:slash="http://purl.org/rss/1.0/modules/slash/"
+	>
+
+<channel>
+	<title>medibound</title>
+	<atom:link href="https://medibound.github.io/feed/" rel="self" type="application/rss+xml" />
+	<link>https://medibound.github.io/</link>
+	<description>\</description>
+	<lastBuildDate>Sun, 05 Sep 2021 06:25:42 +0000</lastBuildDate>
+	<language>en-US</language>
+	<sy:updatePeriod>
+	hourly	</sy:updatePeriod>
+	<sy:updateFrequency>
+	1	</sy:updateFrequency>
+	<generator>https://wordpress.org/?v=5.8</generator>
+
+<image>
+	<url>https://medibound.github.io/wp-content/uploads/2021/09/cropped-favicon-32x32.png</url>
+	<title>medibound</title>
+	<link>https://medibound.github.io/</link>
+	<width>32</width>
+	<height>32</height>
+</image> 
+	<item>
+		<title>Elementor #40</title>
+		<link>https://medibound.github.io/2021/09/05/elementor-40/</link>
+					<comments>https://medibound.github.io/2021/09/05/elementor-40/#respond</comments>
+		
+		<dc:creator><![CDATA[nickyhero965]]></dc:creator>
+		<pubDate>Sun, 05 Sep 2021 05:31:25 +0000</pubDate>
+				<category><![CDATA[Uncategorized]]></category>
+		<guid isPermaLink="false">https://medibound.github.io/?p=40</guid>
+
+					<description><![CDATA[Simple.Your Medical DataIn Your Hands]]></description>
+										<content:encoded><![CDATA[		<div data-elementor-type="wp-post" data-elementor-id="40" class="elementor elementor-40" data-elementor-settings="[]">
+							<div class="elementor-section-wrap">
+							<section class="elementor-section elementor-top-section elementor-element elementor-element-23f2142 elementor-section-stretched elementor-section-boxed elementor-section-height-default elementor-section-height-default" data-id="23f2142" data-element_type="section" data-settings="{&quot;stretch_section&quot;:&quot;section-stretched&quot;,&quot;background_background&quot;:&quot;slideshow&quot;,&quot;background_slideshow_gallery&quot;:[{&quot;id&quot;:60,&quot;url&quot;:&quot;http:\/\/localhost\/medibound\/wp-content\/uploads\/2021\/09\/background.png&quot;}],&quot;background_slideshow_loop&quot;:&quot;yes&quot;,&quot;background_slideshow_slide_duration&quot;:5000,&quot;background_slideshow_slide_transition&quot;:&quot;fade&quot;,&quot;background_slideshow_transition_duration&quot;:500}">
+							<div class="elementor-background-overlay"></div>
+							<div class="elementor-container elementor-column-gap-default">
+					<div class="elementor-column elementor-col-50 elementor-top-column elementor-element elementor-element-afcc29a" data-id="afcc29a" data-element_type="column">
+			<div class="elementor-widget-wrap elementor-element-populated">
+								<div class="elementor-element elementor-element-46dad9f elementor-widget elementor-widget-image" data-id="46dad9f" data-element_type="widget" data-widget_type="image.default">
+				<div class="elementor-widget-container">
+															<img width="1024" height="245" src="https://medibound.github.io/wp-content/uploads/2021/09/search-ex-3-1024x245.png" class="attachment-large size-large" alt="" loading="lazy" srcset="https://medibound.github.io/wp-content/uploads/2021/09/search-ex-3-1024x245.png 1024w, https://medibound.github.io/wp-content/uploads/2021/09/search-ex-3-300x72.png 300w, https://medibound.github.io/wp-content/uploads/2021/09/search-ex-3-768x184.png 768w, https://medibound.github.io/wp-content/uploads/2021/09/search-ex-3-1536x367.png 1536w, https://medibound.github.io/wp-content/uploads/2021/09/search-ex-3-2048x489.png 2048w" sizes="(max-width: 1024px) 100vw, 1024px" />															</div>
+				</div>
+				<div class="elementor-element elementor-element-af31ee2 elementor-widget elementor-widget-heading" data-id="af31ee2" data-element_type="widget" data-widget_type="heading.default">
+				<div class="elementor-widget-container">
+			<h2 class="elementor-heading-title elementor-size-default"><b><i>Simple.<br></i></b><b style="">Your </b>Medical Data<br>In <b style="">Your </b>Hands</h2>		</div>
+				</div>
+					</div>
+		</div>
+				<div class="elementor-column elementor-col-50 elementor-top-column elementor-element elementor-element-101ac93" data-id="101ac93" data-element_type="column">
+			<div class="elementor-widget-wrap elementor-element-populated">
+								<div class="elementor-element elementor-element-fb06d54 elementor-widget elementor-widget-image" data-id="fb06d54" data-element_type="widget" data-widget_type="image.default">
+				<div class="elementor-widget-container">
+															<img width="475" height="776" src="https://medibound.github.io/wp-content/uploads/2021/09/phonemedi.png" class="attachment-large size-large" alt="" loading="lazy" srcset="https://medibound.github.io/wp-content/uploads/2021/09/phonemedi.png 475w, https://medibound.github.io/wp-content/uploads/2021/09/phonemedi-184x300.png 184w" sizes="(max-width: 475px) 100vw, 475px" />															</div>
+				</div>
+					</div>
+		</div>
+							</div>
+		</section>
+						</div>
+					</div>
+		]]></content:encoded>
+					
+					<wfw:commentRss>https://medibound.github.io/2021/09/05/elementor-40/feed/</wfw:commentRss>
+			<slash:comments>0</slash:comments>
+		
+		
+			</item>
+	</channel>
+</rss>

@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <style>#bar {
+                color: white; width: 100%; background-color: #1C1C1E; margin-bottom: 10px; border-radius: 5px; display: inline-flex; align-items: center; justify-content: flex-start;
+            }
+            #bar #inner {
+                display: flex;
+                justify-content: flex-end;
+                align-items: flex-end;
+                width: 50%;
+                padding: 20px;
+
+            }
+            #bar input {
+                margin-left: 10px;
+
+            }
+            #bar span {
+                display: flex;
+                width: 50%;
+                padding: 20px;
+            }
+            #button {
+                color: rgb(211, 110, 110);
+            }
+            #button:hover {
+                color: black
+            }
+            #loading-1 {
+            }
+            #loading-2 {
+            }
+            @media screen and (max-width: 900px) {
+                #content {
+                    flex-direction: column !important;
+                }
+                .column {
+                    width: 100% !important
+                }
+            }</style>
+        <script src="https://cdn.jsdelivr.net/npm/p5@1.4.0/lib/p5.min.js"></script>
+        <script src="https://unpkg.com/ml5@0.6.0/dist/ml5.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script type="text/javascript">
+            window.onload = function() {
+                if (parent) {
+                    var oHead = document.getElementsByTagName("head")[0];
+                    var arrStyleSheets = parent.document.getElementsByTagName("style");
+                    for (var i = 0; i < arrStyleSheets.length; i++)
+                        oHead.appendChild(arrStyleSheets[i].cloneNode(true));
+                }
+            }
+            </script>
+        <script>
+
+        var knnChart = null;
+        var cnnChart = null;
+        var knnChartDL = null;
+        var cnnChartDL = null;
+
+        var lineChart = null;
+        var lineChartDL = null;
+
+        function test() {
+
+
+            let video;
+                let features;
+                let knn;
+                let cnn;
+                let labelP;
+                let ready = false;
+                let x;
+                let y;
+                let label = 'nothing';
+                let knnResult;
+                let knnArray = [];
+                let cnnArray = [];
+                let knnArrayTemp = [];
+                let cnnArrayTemp = [];
+
+                let knnArrayAvg = [null,null,null,null,null];
+                let cnnArrayAvg = [null,null,null,null,null];
+
+                
+                const input = document.getElementsByClassName('bar');
+                const train = document.getElementById('train');
+                
+                const sampleSize = parseInt(document.getElementById("quantity").value);
+                const trialSampleSize = parseInt(document.getElementById("trial-quantity").value);
+
+
+                const CHART_COLORS = {
+                    red: 'rgb(255, 99, 132)',
+                    orange: 'rgb(255, 159, 64)',
+                    yellow: 'rgb(255, 205, 86)',
+                    green: 'rgb(75, 192, 192)',
+                    blue: 'rgb(54, 162, 235)',
+                    purple: 'rgb(153, 102, 255)',
+                    grey: 'rgb(201, 203, 207)'
+                    };
+                    const CHART_COLORS_OPAC = {
+                    red: 'rgb(255, 99, 132, 0.5)',
+                    orange: 'rgb(255, 159, 64, 0.5)',
+                    yellow: 'rgb(255, 205, 86, 0.5)',
+                    green: 'rgb(75, 192, 192, 0.5)',
+                    blue: 'rgb(54, 162, 235, 0.5)',
+                    purple: 'rgb(153, 102, 255, 0.5)',
+                    grey: 'rgb(201, 203, 207, 0.5)'
+                    };
+
+                    const NAMED_COLORS = [
+                    CHART_COLORS.red,
+                    CHART_COLORS.orange,
+                    CHART_COLORS.yellow,
+                    CHART_COLORS.green,
+                    CHART_COLORS.blue,
+                    CHART_COLORS.purple,
+                    CHART_COLORS.grey,
+                    ];
+
+                    const NAMED_COLORS_OPAC = [
+                    CHART_COLORS_OPAC.red,
+                    CHART_COLORS_OPAC.orange,
+                    CHART_COLORS_OPAC.yellow,
+                    CHART_COLORS_OPAC.green,
+                    CHART_COLORS_OPAC.blue,
+                    CHART_COLORS_OPAC.purple,
+                    CHART_COLORS_OPAC.grey,
+                    ];
+
+                var numImage;
+                var filledImagesKNN;
+                var filledImagesCNN;
+
+                
+
+            function namedColor(index) {
+                return NAMED_COLORS[index % NAMED_COLORS.length];
+            }
+            function namedColorOpac(index) {
+                return NAMED_COLORS_OPAC[index % NAMED_COLORS_OPAC.length];
+            }
+
+            function downloadGraph(name, graph) {
+                var link = document.createElement('a');
+                link.href = graph.toBase64Image();
+                link.download = name;
+                link.click();
+            }
+
+
+            function convertE(num) {
+                console.log(num)
+                var values = num.toString().split('e');
+                console.log(values)
+                if (values[1] != null) {
+                    var pow = parseFloat(values[1]);
+                    console.log(pow)
+
+                    var initNum = parseFloat(values[0]);
+                    console.log(initNum)
+
+                    var result = initNum * Math.pow(10, pow )
+                    return result;
+                }
+                return num;
+
+            }
+
+            function distributeAvg(num, data, array) {
+                if (num == 0) {
+                    if (array[0] == null) {
+                        array[0] = [data];
+                    } else {
+                        array[0].push(data);
+                    }
+                }
+                else if (num == 1) {
+                    if (array[1] == null) {
+                        array[1] = [data];
+                    } else {
+                        array[1].push(data);
+                    }
+                }
+                else if (num == 2) {
+                    if (array[2] == null) {
+                        array[2] = [data];
+                    } else {
+                        array[2].push(data);
+                    }
+                }
+                else if (num == 3) {
+                    if (array[3] == null) {
+                        array[3] = [data];
+                    } else {
+                        array[3].push(data);
+                    }
+                }
+                else if (num == 4) {
+                    if (array[4] == null) {
+                        array[4] = [data];
+                    } else {
+                        array[4].push(data);
+                    }
+                }
+                return array;
+            }
+
+            /*
+            <tr style="padding: 5px">
+                            <th>Trial 1<\/th>
+                            <th>100<\/th>
+                            <th>100<\/th>
+                            <th>100<\/th>
+                            <th>100<\/th>
+                            <th>100<\/th>
+                        <\/tr>
+            */
+
+            function finalizeAvg(array) {
+                for(var i = 0; i < array.length; i++) {
+                    if (array[i] != null)  {
+                        var sumArray = 0;
+                        for (var j = 0; j < array[i].length; j++) {
+                            sumArray += array[i][j];
+                        }
+                        sumArray /= array[i].length;
+                        array[i] = sumArray;
+                    }
+                }
+                return array;
+            }
+
+            function composeTable(array, sampleSize) {
+                var newArray = [[],[],[],[],[]];
+                var maxTrials = 0;
+                var finalString = "";
+                finalString += "<table style='width:95%; font-weight: 300; font-size: 13px'><tr style='margin-bottom:10px'><th><\/th><th>No Present DR<\/th><th>Mild DR<\/th><th>Moderate DR<\/th><th>Severe DR<\/th><th>Proliferative DR<\/th><\/tr><tr><th><\/th><\/tr>";
+                for(var i = 0; i < array.length; i++) {
+                    if (array[i] != null)  {
+                        for (var j = 0; j < array[i].length; j = j+sampleSize) {
+                            var size;
+                            var sumArray = 0;
+                            var trials = Math.ceil(array[i].length / sampleSize);
+                            if (trials > maxTrials) {
+                                maxTrials = trials;
+                            }
+                            if (array[i].length < (j+sampleSize)) {
+                                size = array[i].length;
+                            }
+                            else {
+                                size = (j+sampleSize);
+                            }
+                            for (var k = j; k < size; k++) {
+                                sumArray += array[i][k];
+                            }
+                            sumArray /= (size - j);
+                            newArray[i].push(sumArray);
+                        }
+                        
+                    }
+                }
+                for (var i = 0; i < maxTrials; i++) {
+                    var newI = i + 1;
+                    finalString += "<tr style='padding: 5px'><th>Trial " + newI + "<\/th><th>" + newArray[0][i] + "<\/th><th>" + newArray[1][i] + "<\/th><th>" + newArray[2][i] + "<\/th><th>" + newArray[3][i] + "<\/th><th>" + newArray[4][i] + "<\/th><\/tr>";
+                }
+                finalString += "<\/table>"
+                console.log(maxTrials);
+                return finalString;
+            }
+
+
+            function developChartKNN(name, data, sampleSize) {
+                const ctx = document.getElementById(name).getContext('2d');
+                knnChart = new Chart(ctx, {
+                    type: 'radar',
+                    data: {
+                        labels: [
+                            'No Present DR',
+                            'Mild DR',
+                            'Moderate DR',
+                            'Severe DR',
+                            'Proliferative DR',
+                        ],
+                        datasets: [{
+                            label: 'Sample Size [n=' + sampleSize + ']',
+                            data: data,
+                            fill: true,
+                            borderColor: 'rgb(255, 99, 132)',
+                            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                            pointBackgroundColor: 'rgb(255, 99, 132)',
+                            pointBorderColor: '#fff',
+                            pointBackgroundColor: 'rgb(255, 99, 132)',
+                            pointHoverBorderColor: 'rgb(255, 99, 132)'
+                        }]
+                    },
+                    options: {
+                        elements: {
+                            line: {
+                                borderWidth: 3
+                            }
+                        },
+                        scales: {
+                            r: {
+                                suggestedMin: 0,
+                            }
+                        }
+                    },
+                });
+                const ctx2 = document.getElementById(name + "DL").getContext('2d');
+                knnChartDL = new Chart(ctx2, {
+                    type: 'radar',
+                    data: {
+                        labels: [
+                            'No Present DR',
+                            'Mild DR',
+                            'Moderate DR',
+                            'Severe DR',
+                            'Proliferative DR',
+                        ],
+                        datasets: [{
+                            label: 'Sample Size [n=' + '125' + ']',
+                            data: [0.31,0.216,0.128,0.16,0.204],
+                            fill: true,
+                            borderColor: 'rgb(255, 99, 132)',
+                            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                            pointBackgroundColor: 'rgb(255, 99, 132)',
+                            pointBorderColor: '#fff',
+                            pointBackgroundColor: 'rgb(255, 99, 132)',
+                            pointHoverBorderColor: 'rgb(255, 99, 132)'
+                        },
+                        {
+                            label: 'Sample Size [n=' + '250' + ']',
+                            data: [0.336,0.244,0.164,0.176,0.12],
+                            fill: true,
+                            borderColor: namedColor(1),
+                            backgroundColor: namedColorOpac(1),
+                            pointBackgroundColor: 'rgb(255, 99, 132)',
+                            pointBorderColor: '#fff',
+                            pointBackgroundColor: 'rgb(255, 99, 132)',
+                            pointHoverBorderColor: 'rgb(255, 99, 132)'
+                        },
+                        {
+                            label: 'Sample Size [n=' + '375' + ']',
+                            data: [0.368,0.248,0.196,0.156,0.124],
+                            fill: true,
+                            borderColor: namedColor(2),
+                            backgroundColor: namedColorOpac(2),
+                            pointBackgroundColor: 'rgb(255, 99, 132)',
+                            pointBorderColor: '#fff',
+                            pointBackgroundColor: 'rgb(255, 99, 132)',
+                            pointHoverBorderColor: 'rgb(255, 99, 132)'
+                        },
+                        {
+                            label: 'Sample Size [n=' + '500' + ']',
+                            data: [0.364,0.292,0.176,0.148,0.136],
+                            fill: true,
+                            borderColor: namedColor(3),
+                            backgroundColor: namedColorOpac(3),
+                            pointBackgroundColor: 'rgb(255, 99, 132)',
+                            pointBorderColor: '#fff',
+                            pointBackgroundColor: 'rgb(255, 99, 132)',
+                            pointHoverBorderColor: 'rgb(255, 99, 132)'
+                        },
+                        {
+                            label: 'Sample Size [n=' + '1000' + ']',
+                            data: [0.38,0.324,0.176,0.164,0.19],
+                            fill: true,
+                            borderColor: namedColor(4),
+                            backgroundColor: namedColorOpac(4),
+                            pointBackgroundColor: 'rgb(255, 99, 132)',
+                            pointBorderColor: '#fff',
+                            pointBackgroundColor: 'rgb(255, 99, 132)',
+                            pointHoverBorderColor: 'rgb(255, 99, 132)'
+                        },
+                        {
+                            label: 'Sample Size [n=' + '1500' + ']',
+                            data: [0.416,0.272,0.184,0.16,0.228],
+                            fill: true,
+                            borderColor: namedColor(5),
+                            backgroundColor: namedColorOpac(5),
+                            pointBackgroundColor: 'rgb(255, 99, 132)',
+                            pointBorderColor: '#fff',
+                            pointBackgroundColor: 'rgb(255, 99, 132)',
+                            pointHoverBorderColor: 'rgb(255, 99, 132)'
+                        },
+                        {
+                            label: 'Sample Size [n=' + '2000' + ']',
+                            data: [0.372,0.316,0.188,0.162,0.228],
+                            fill: true,
+                            borderColor: namedColor(6),
+                            backgroundColor: namedColorOpac(6),
+                            pointBackgroundColor: 'rgb(255, 99, 132)',
+                            pointBorderColor: '#fff',
+                            pointBackgroundColor: 'rgb(255, 99, 132)',
+                            pointHoverBorderColor: 'rgb(255, 99, 132)'
+                        },
+                        {
+                            label: 'Sample Size [n=' + '2500' + ']',
+                            data: [0.388,0.332,0.204,0.152,0.256],
+                            fill: true,
+                            borderColor: namedColor(7),
+                            backgroundColor: namedColorOpac(7),
+                            pointBackgroundColor: 'rgb(255, 99, 132)',
+                            pointBorderColor: '#fff',
+                            pointBackgroundColor: 'rgb(255, 99, 132)',
+                            pointHoverBorderColor: 'rgb(255, 99, 132)'
+                        },
+                        
+                    ]
+                    },
+                    options: {
+                        elements: {
+                            line: {
+                                borderWidth: 3
+                            }
+                        },
+                        scales: {
+                            r: {
+                                suggestedMin: 0,
+                            }
+                        }
+                    },
+                });
+            }
+
+            function developChartCNN(name, data, sampleSize) {
+                const ctx = document.getElementById(name).getContext('2d');
+                cnnChart = new Chart(ctx, {
+                    type: 'radar',
+                    data: {
+                        labels: [
+                            'No Present DR',
+                            'Mild DR',
+                            'Moderate DR',
+                            'Severe DR',
+                            'Proliferative DR',
+                        ],
+                        datasets: [{
+                            label: 'Sample Size [n=' + sampleSize + ']',
+                            data: data,
+                            fill: true,
+                            borderColor: 'rgb(255, 99, 132)',
+                            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                            pointBackgroundColor: 'rgb(255, 99, 132)',
+                            pointBorderColor: '#fff',
+                            pointBackgroundColor: 'rgb(255, 99, 132)',
+                            pointHoverBorderColor: 'rgb(255, 99, 132)'
+                        }]
+                    },
+                    options: {
+                        elements: {
+                            line: {
+                                borderWidth: 3
+                            }
+                        },
+                        scales: {
+                            r: {
+                                suggestedMin: 0,
+                            }
+                        }
+                    },
+                });
+                const ctx2 = document.getElementById(name + "DL").getContext('2d');
+                cnnChartDL = new Chart(ctx2, {
+                    type: 'radar',
+                    data: {
+                        labels: [
+                            'No Present DR',
+                            'Mild DR',
+                            'Moderate DR',
+                            'Severe DR',
+                            'Proliferative DR',
+                        ],
+                        datasets: [{
+                            label: 'Sample Size [n=' + '125' + ']',
+                            data: [0.182,0.246,0.22,0.18,0.14],
+                            fill: true,
+                            borderColor: 'rgb(255, 99, 132)',
+                            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                            pointBackgroundColor: 'rgb(255, 99, 132)',
+                            pointBorderColor: '#fff',
+                            pointBackgroundColor: 'rgb(255, 99, 132)',
+                            pointHoverBorderColor: 'rgb(255, 99, 132)'
+                        },
+                        {
+                            label: 'Sample Size [n=' + '250' + ']',
+                            data: [0.224,0.252,0.24,0.204,0.084],
+                            fill: true,
+                            borderColor: namedColor(1),
+                            backgroundColor: namedColorOpac(1),
+                            pointBackgroundColor: 'rgb(255, 99, 132)',
+                            pointBorderColor: '#fff',
+                            pointBackgroundColor: 'rgb(255, 99, 132)',
+                            pointHoverBorderColor: 'rgb(255, 99, 132)'
+                        },
+                        {
+                            label: 'Sample Size [n=' + '375' + ']',
+                            data: [0.3032380952,0.2575238095,0.2226666667,0.2131428571,0.1201904762],
+                            fill: true,
+                            borderColor: namedColor(2),
+                            backgroundColor: namedColorOpac(2),
+                            pointBackgroundColor: 'rgb(255, 99, 132)',
+                            pointBorderColor: '#fff',
+                            pointBackgroundColor: 'rgb(255, 99, 132)',
+                            pointHoverBorderColor: 'rgb(255, 99, 132)'
+                        },
+                        {
+                            label: 'Sample Size [n=' + '500' + ']',
+                            data: [0.232,0.268,0.252,0.276,0.116],
+                            fill: true,
+                            borderColor: namedColor(3),
+                            backgroundColor: namedColorOpac(3),
+                            pointBackgroundColor: 'rgb(255, 99, 132)',
+                            pointBorderColor: '#fff',
+                            pointBackgroundColor: 'rgb(255, 99, 132)',
+                            pointHoverBorderColor: 'rgb(255, 99, 132)'
+                        },
+                        {
+                            label: 'Sample Size [n=' + '1000' + ']',
+                            data: [0.244,0.308,0.284,0.276,0.168],
+                            fill: true,
+                            borderColor: namedColor(4),
+                            backgroundColor: namedColorOpac(4),
+                            pointBackgroundColor: 'rgb(255, 99, 132)',
+                            pointBorderColor: '#fff',
+                            pointBackgroundColor: 'rgb(255, 99, 132)',
+                            pointHoverBorderColor: 'rgb(255, 99, 132)'
+                        },
+                        {
+                            label: 'Sample Size [n=' + '1500' + ']',
+                            data: [0.268,0.312,0.316,0.32,0.236],
+                            fill: true,
+                            borderColor: namedColor(5),
+                            backgroundColor: namedColorOpac(5),
+                            pointBackgroundColor: 'rgb(255, 99, 132)',
+                            pointBorderColor: '#fff',
+                            pointBackgroundColor: 'rgb(255, 99, 132)',
+                            pointHoverBorderColor: 'rgb(255, 99, 132)'
+                        },
+                        {
+                            label: 'Sample Size [n=' + '2000' + ']',
+                            data: [0.288,0.364,0.316,0.32,0.244],
+                            fill: true,
+                            borderColor: namedColor(6),
+                            backgroundColor: namedColorOpac(6),
+                            pointBackgroundColor: 'rgb(255, 99, 132)',
+                            pointBorderColor: '#fff',
+                            pointBackgroundColor: 'rgb(255, 99, 132)',
+                            pointHoverBorderColor: 'rgb(255, 99, 132)'
+                        },
+                        {
+                            label: 'Sample Size [n=' + '2500' + ']',
+                            data: [0.3651428571,0.362,0.3244761905,0.3205714286,0.2693333333],
+                            fill: true,
+                            borderColor: namedColor(7),
+                            backgroundColor: namedColorOpac(7),
+                            pointBackgroundColor: 'rgb(255, 99, 132)',
+                            pointBorderColor: '#fff',
+                            pointBackgroundColor: 'rgb(255, 99, 132)',
+                            pointHoverBorderColor: 'rgb(255, 99, 132)'
+                        },]
+                    },
+                    options: {
+                        elements: {
+                            line: {
+                                borderWidth: 3
+                            }
+                        },
+                        scales: {
+                            r: {
+                                suggestedMin: 0,
+                            }
+                        }
+                    },
+                });
+            }
+
+            function developChartLine(name, knn, cnn, sampleSize) {
+                const ctx = document.getElementById(name).getContext('2d');
+                lineChart = new Chart(ctx, {
+                    type: 'scatter',
+                    data: {
+                        datasets: [{
+                            label: 'KNN Mean Accuracy',
+                            data: [{
+                                x: sampleSize,
+                                y: knn
+                            }],
+                            showLine: true,
+                            backgroundColor: 'rgb(255, 99, 132,0.5)',
+                            borderColor: 'rgb(255, 99, 132)',
+                        },
+                        {
+                            label: 'CNN Mean Accuracy',
+                            data: [{
+                                x: sampleSize,
+                                y: cnn
+                            }],
+                            showLine: true,
+                            backgroundColor: namedColorOpac(1),
+                            borderColor: namedColor(1),
+                        }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            title: {
+                                display: true,
+                                text: 'Mean Accuracy v.s. Training Sample Size'
+                            }
+                        },
+                        scales: {
+                            xAxes: [{
+                                ticks: {
+                                    suggestedMin: '0',
+                                },
+                            }]
+                        }
+                    }
+                });
+                const ctx2 = document.getElementById(name + "DL").getContext('2d');
+                lineChartDL = new Chart(ctx2, {
+                    type: 'scatter',
+                    data: {
+                        datasets: [{
+                            label: 'KNN Mean Accuracy',
+                            data: [{
+                                x: 125,
+                                y: 0.5
+                            },
+                            {
+                                x: 250,
+                                y: 0.54
+                            },
+                            {
+                                x: 375,
+                                y: 0.545
+                            },
+                            {
+                                x: 500,
+                                y: 0.5456
+                            },
+                            {
+                                x: 1000,
+                                y: 0.55
+                            },
+                            {
+                                x: 1500,
+                                y: 0.56
+                            },
+                            {
+                                x: 2000,
+                                y: 0.562222
+                            },
+                            {
+                                x: 2500,
+                                y: 0.567884
+                            },
+                        
+                        ],
+                            showLine: true,
+                            backgroundColor: namedColorOpac(1),
+                            borderColor: namedColor(1),
+                        },
+                        {
+                            label: 'CNN Mean Accuracy',
+                            data: [{
+                                x: 125,
+                                y: 0.48
+                            },
+                            {
+                                x: 250,
+                                y: 0.52
+                            },
+                            {
+                                x: 375,
+                                y: 0.56
+                            },
+                            {
+                                x: 500,
+                                y: 0.5644
+                            },
+                            {
+                                x: 1000,
+                                y: 0.58
+                            },
+                            {
+                                x: 1500,
+                                y: 0.59
+                            },
+                            {
+                                x: 2000,
+                                y: 0.6222
+                            },
+                            {
+                                x: 2500,
+                                y: 0.63333
+                            },
+                        ],
+                            showLine: true,
+                            backgroundColor: namedColorOpac(2),
+                            borderColor: namedColor(2),
+                        }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            title: {
+                                display: true,
+                                text: 'Mean Accuracy v.s. Training Sample Size'
+                            }
+                        },
+                        scales: {
+                            xAxes: [{
+                                ticks: {
+                                    suggestedMin: '0',
+                                },
+                            }]
+                        }
+                    }
+                });
+            }
+
+            function updateChartKNN(data, sampleSize) {
+                var dsColor = namedColor(knnChart.data.datasets.length);
+                var newDataset = {
+                    label: 'Sample Size [n=' + sampleSize + ']',
+                    backgroundColor: namedColorOpac(knnChart.data.datasets.length),
+                    borderColor: dsColor,
+                    data: data,
+                };
+                knnChart.data.datasets.push(newDataset);
+                knnChart.update();
+                knnChartDL.data.datasets.push(newDataset);
+                knnChartDL.update();
+            }
+
+            function updateChartCNN(data, sampleSize) {
+                console.log(cnnChart)
+                var dsColor = namedColor(cnnChart.data.datasets.length);
+                var newDataset = {
+                    label: 'Sample Size [n=' + sampleSize + ']',
+                    backgroundColor: namedColorOpac(cnnChart.data.datasets.length),
+                    borderColor: dsColor,
+                    data: data,
+                };
+                cnnChart.data.datasets.push(newDataset);
+                cnnChart.update();
+                cnnChartDL.data.datasets.push(newDataset);
+                cnnChartDL.update();
+            }
+
+            function updateChartLine(knn, cnn, sampleSize) {
+                var newDatasetKNN = {
+                                x: sampleSize,
+                                y: knn
+                            };
+                var newDatasetCNN = {
+                                x: sampleSize,
+                                y: cnn
+                            };
+                lineChart.data.datasets[0].data.push(newDatasetKNN);
+                lineChart.data.datasets[1].data.push(newDatasetCNN);
+                lineChart.update();
+                lineChartDL.data.datasets[0].data.push(newDatasetKNN);
+                lineChartDL.data.datasets[1].data.push(newDatasetCNN);
+                lineChartDL.update();
+            }
+
+            function run() {
+                const model = document.getElementsByClassName('model');
+                
+               const sampleBool = isNaN(sampleSize);
+
+                if (model[0].files.length == 0 && model[1].files.length == 0) {
+
+                }
+                else if (sampleBool) {
+
+                }
+                else {
+                    knnArray = [];
+                    cnnArray = [];
+                    reset();
+                    numImages();
+                    knn = ml5.KNNClassifier();
+
+                    var knnReader = new FileReader();
+                    knnReader.onload = function(e) { 
+                        knn.load(JSON.parse(e.target.result), ()=>{
+                            let options = {
+                                inputs: [64, 64, 4],
+                                task: 'imageClassification',
+                                debug: true,
+                            };
+                            cnn = ml5.neuralNetwork(options);
+
+                            cnn.load(model[1].files, ()=>{
+                                console.log("worked")
+                                features = ml5.featureExtractor('MobileNet', runKNN);
+                            })
+                        })
+                    }
+                    knnReader.readAsText(model[0].files.item(0));
+
+                    
+                }
+                
+            }
+
+
+            function reset () {
+                document.getElementById('loading-1').style.width = "0%";
+                document.getElementById('loading-2').style.width = "0%";
+                const p1 = document.getElementById('percentage-1');
+                p1.innerHTML = "0/0"
+                const p2 = document.getElementById('percentage-2');
+                p2.innerHTML = "0/0"
+                document.getElementById('test').innerHTML = "RUN EXPERIMENT"
+                document.getElementById('test').disabled = false;
+                document.getElementsByClassName('knnResultsRight')[0].innerHTML = "<span>KNN Graphical Analysis: N/A<\/span>";
+                document.getElementsByClassName('cnnResultsRight')[0].innerHTML = "<span>CNN Graphical Analysis: N/A<\/span>";
+            }
+
+            function numImages() {
+                document.getElementById('test').innerHTML = "TESTING...";
+                document.getElementById('test').disabled = true;
+                const input = document.getElementsByClassName('bar')
+                numImage = 0;
+
+                for(var j = 0; j < input.length; j++) {
+                    console.log("working")
+                    if (input[j].files) {
+                    [].forEach.call(input[j].files, (file) => {
+                        if (!/\.(jpe?g|png|gif)$/i.test(file.name)) {
+                            return alert(file.name + " is not an image");
+                        } else {
+                            numImage++;
+                        }
+                    });
+                    
+                    }
+                }
+            }
+
+
+            function runKNN() {
+
+                const input = document.getElementsByClassName('bar')
+                const preview = document.getElementById('preview')
+
+                knnArrayAvg = [null,null,null,null,null];
+
+                const choices = ["0","1","2","3","4"];
+                filledImagesKNN = 0;
+
+                for(var j = 0; j < input.length; j++) {
+                    console.log("working")
+                    if (input[j].files) {
+                    [].forEach.call(input[j].files, readAndPreview);
+                    
+                    } 
+                    if (numImage == 0) {
+                        document.getElementById('test').innerHTML = "RUN EXPERIMENT";
+                        document.getElementById('test').disabled = false;
+                    }
+                }
+
+                function readAndPreview(file) {
+
+                // Make sure `file.name` matches our extensions criteria
+                if (!/\.(jpe?g|png|gif)$/i.test(file.name)) {
+                    return ;
+                } // else...
+                
+                var reader = new FileReader();
+                
+                const num = j;
+
+                const loading1 = document.getElementById('loading-1');
+                const p1 = document.getElementById('percentage-1');
+                p1.innerHTML = "0/0"
+
+
+                reader.addEventListener("load", function() {
+                    var image = new Image();
+                    image.height = 64;
+                    image.width = 64;
+                    image.title  = file.name;
+                    image.src    = this.result;
+                    image.onload = () => {
+                        const logits = features.infer(image);
+                        knn.classify(logits, (err, res)=> {
+
+                            const numAdjust = num ;
+                            filledImagesKNN++;
+                            var percentage = filledImagesKNN/numImage * 100;
+                            var percentString = percentage + "%"
+                            knnArray.push(numAdjust.toString() == res.label);
+                            if (numAdjust.toString() == res.label) {
+                                knnArrayAvg = distributeAvg(numAdjust, 1, knnArrayAvg);
+                            }
+                            else {
+                                knnArrayAvg = distributeAvg(numAdjust, 0, knnArrayAvg);
+                            }
+                            
+                            if (parseInt(res.label) <= (numAdjust + 1) && parseInt(res.label) >= (numAdjust - 1)) {
+                                knnArrayTemp.push(true);
+                            } else {
+                                knnArrayTemp.push(false);
+                            }
+                            loading1.style.width = percentString;
+                            p1.innerHTML = filledImagesKNN + "/" + numImage;
+                            if (percentage == 100) {
+                                p1.innerHTML = "FINISHED";
+                                console.log("finished");
+                                let results = 0;
+                                let resultsAdjusted = 0;
+                                for(var i = 0; i < knnArray.length; i++) {
+                                    if (knnArray[i] == true) {
+                                        results += 1;
+                                    }
+                                    if (knnArrayTemp[i] == true) {
+                                        resultsAdjusted += 1;
+                                    }
+                                    
+                                }
+                                results /= knnArray.length;
+                                resultsAdjusted /= knnArrayTemp.length;
+                                results = results.toString().substring(0,4)
+                                resultsAdjusted = resultsAdjusted.toString().substring(0,4)
+
+                                knnResult = results;
+
+                                var table = composeTable(knnArrayAvg, trialSampleSize);
+
+                                knnArrayAvg = finalizeAvg(knnArrayAvg);
+                                document.getElementsByClassName('knnResultsRight')[0].innerHTML =  "<h6 style='color: white; margin: 0'>KNN Definite Accuracy:<\/h6><h1 style='color: white; margin: 0; font-size: 75px'>" + results + "<\/h1 ><br/>" + "<h6 style='color: white; margin: 0'>KNN Buffered Accuracy:<\/h6><h1 style='color: white; margin: 0; font-size: 75px'>" + resultsAdjusted + "<\/h1><br/>";
+                                document.getElementsByClassName('knnTrialResults')[0].innerHTML = table;
+                                if (knnChart == null) {
+                                    console.log(knnChart);
+                                    document.getElementsByClassName('knnResults')[0].innerHTML += "<div style='background-color: white; border-radius: 4px'><canvas id='knnChart' style='color: #fff; width: 50%' width='400' height='400'><\/canvas><\/div>";
+                                    document.getElementsByClassName('hiddenGraphs')[0].innerHTML += "<div style='background-color: white; border-radius: 4px'><canvas id='knnChartDL' style='color: #fff; width: 50%' width='1000' height='1000'><\/canvas><\/div>";
+                                    document.getElementsByClassName('hiddenGraphs')[0].innerHTML += "<div style='background-color: white; border-radius: 4px'><canvas id='lineChartDL' style='color: #fff; width: 50%' width='1000' height='700'><\/canvas><\/div>";
+                                    document.getElementsByClassName('hiddenGraphs')[0].innerHTML += "<div style='background-color: white; border-radius: 4px'><canvas id='cnnChartDL' style='color: #fff; width: 50%' width='1000' height='1000'><\/canvas><\/div>";
+                                    developChartKNN("knnChart", knnArrayAvg, sampleSize);
+                                }
+                                else {
+                                    updateChartKNN(knnArrayAvg, sampleSize);
+                                    console.log(knnArrayAvg)
+                                }
+                                
+                                runCNN();
+                            }
+                        })
+                            
+
+                    };
+                });
+                
+                reader.readAsDataURL(file);
+                
+                }
+
+            }
+
+            function runCNN() {
+
+                const input = document.getElementsByClassName('bar')
+                const preview = document.getElementById('preview')
+
+                cnnArrayAvg = [null,null,null,null,null];
+
+                const choices = ["0","1","2","3","4"];
+                filledImagesCNN = 0;
+
+                for(var j = 0; j < input.length; j++) {
+                    console.log("working")
+                    if (input[j].files) {
+                    [].forEach.call(input[j].files, readAndPreview);
+                    
+                    } 
+                    if (numImage == 0) {
+                        document.getElementById('test').innerHTML = "RUN EXPERIMENT";
+                        document.getElementById('test').disabled = false;
+                    }
+                }
+
+                function readAndPreview(file) {
+
+                // Make sure `file.name` matches our extensions criteria
+                if (!/\.(jpe?g|png|gif)$/i.test(file.name)) {
+                    return ;
+                } // else...
+
+                var reader = new FileReader();
+
+                const num = j;
+
+                const loading2 = document.getElementById('loading-2');
+                const p2 = document.getElementById('percentage-2');
+                p2.innerHTML = "0/0"
+
+
+                reader.addEventListener("load", function() {
+                    var image = new Image();
+                    image.height = 64;
+                    image.width = 64;
+                    image.title  = file.name;
+                    image.src    = this.result;
+                    image.onload = () => {
+                        let inputImage = {
+                            image: image,
+                        };
+                        cnn.classify(inputImage, (err, res)=> {
+                            const numAdjust = num ;
+                            filledImagesCNN++;
+                            var percentage = filledImagesCNN/numImage * 100;
+                            var percentString = percentage + "%";
+                            var leadConfidence = 0;
+                            var leadLabel;
+                            for (var i = 0; i < res.length; i++) {
+                                var conf = res[i].confidence;
+                                if (leadConfidence < conf ) {
+                                    
+                                    leadConfidence = conf;
+                                    leadLabel = res[i].label;
+                                }
+                            }
+                            var leadConfidenceTemp = leadConfidence * 100;
+                            var leadPercent = leadConfidenceTemp.toString().substring(0,5) + "%";
+                            //document.getElementsByClassName('cnnResults')[0].innerHTML = leadLabel + " - " + leadConfidence;
+
+                            cnnArray.push(numAdjust.toString() == leadLabel);
+
+                            if (numAdjust.toString() == leadLabel) {
+                                cnnArrayAvg = distributeAvg(numAdjust, 1, cnnArrayAvg);
+                            }
+                            else {
+                                cnnArrayAvg = distributeAvg(numAdjust, 0, cnnArrayAvg);
+                            }
+
+                            if (parseInt(leadLabel) <= (numAdjust + 1) && parseInt(leadLabel) >= (numAdjust - 1)) {
+                                cnnArrayTemp.push(true);
+                            } else {
+                                cnnArrayTemp.push(false);
+                            }
+                            loading2.style.width = percentString;
+                            p2.innerHTML = filledImagesCNN + "/" + numImage;
+                            if (percentage == 100) {
+                                p2.innerHTML = "FINISHED";
+                                console.log("finished");
+                                let results = 0;
+                                let resultsAdjusted = 0;
+                                for(var i = 0; i < cnnArray.length; i++) {
+                                    if (cnnArray[i] == true) {
+                                        results += 1;
+                                    }
+                                    if (cnnArrayTemp[i] == true) {
+                                        resultsAdjusted += 1;
+                                    }
+                                    
+                                }
+                                results /= cnnArray.length;
+                                resultsAdjusted /= cnnArrayTemp.length;
+                                results = results.toString().substring(0,4)
+                                resultsAdjusted = resultsAdjusted.toString().substring(0,4)
+
+                                var table = composeTable(cnnArrayAvg, trialSampleSize);
+
+                                cnnArrayAvg = finalizeAvg(cnnArrayAvg);
+                                document.getElementsByClassName('cnnResultsRight')[0].innerHTML = "<h6 style='color: white; margin: 0'>CNN Definite Accuracy:<\/h6><h1 style='color: white; margin: 0; font-size: 75px'>" + results + "<\/h1 ><br/>" + "<h6 style='color: white; margin: 0'>CNN Buffered Accuracy:<\/h6><h1 style='color: white; margin: 0; font-size: 75px'>" + resultsAdjusted + "<\/h1><br/>";
+                                document.getElementsByClassName('cnnTrialResults')[0].innerHTML = table;
+
+                                
+                                if (cnnChart == null) {
+                                    document.getElementsByClassName('cnnResults')[0].innerHTML += "<div style='background-color: white; border-radius: 4px'><canvas id='cnnChart' style='color: #fff; width: 50%' width='400' height='400'><\/canvas><\/div>";
+                                    document.getElementsByClassName('trialResults')[0].innerHTML = "<div style='background-color: white; border-radius: 4px'><canvas id='lineChart' style='color: #fff; width: 50%' width='800' height='400'><\/canvas><\/div>";
+                                    
+                                   
+                                    developChartCNN("cnnChart", cnnArrayAvg, sampleSize);
+                                    developChartLine("lineChart", knnResult, results, sampleSize);
+                                }
+                                else {
+                                    console.log(cnnArrayAvg)
+                                    updateChartCNN(cnnArrayAvg, sampleSize);
+                                    updateChartLine(knnResult, results, sampleSize);
+                                }
+                                document.getElementById('test').innerHTML = "ADD TRIAL"
+                                document.getElementById('test').disabled = false;
+                            }
+                        })
+
+                    };
+                });
+
+                reader.readAsDataURL(file);
+
+                }
+
+            }
+
+            return({run, reset, downloadGraph})
+        }
+
+        </script>
+    </head>
+    <body style="background-color: #111111;">
+        <div id="content" style=" height: 100%; width: 100%;  display: flex; flex-direction: row;">
+            <div class="column" style="width: 50%; padding:5px;">
+                <h3 style="color: white">Testing Constraints:</h3>
+                <div id="bar">
+<span>KNN Model (.json)</span> <div> <input class="model" type="file" id="files" name="files">
+</div>
+</div>
+                <div id="bar">
+<span>CNN Model (.json)</span> <div> <input class="model" type="file" id="files" name="files" multiple>
+</div>
+</div>
+                <div id="bar">
+<span>Sample Size of Training Group (# of Images)</span> <div> <input type="number" id="quantity" name="quantity" min="1" max="100000">
+</div>
+</div>
+                <div id="bar">
+<span>Random Sample Size per Individual Trial Group (# of Images)</span> <div> <input type="number" id="trial-quantity" name="quantity" min="1" max="100000">
+</div>
+</div>
+                <h3 style="color: white">Testing Samples:</h3>
+                <div id="bar">
+<span>No Present Diabetic Retinopathy</span> <div> <input class="bar" type="file" id="files" name="files" multiple>
+</div>
+</div>
+                <div id="bar">
+<span>Mild Diabetic Retinopathy</span> <div> <input class="bar" type="file" id="files" name="files" multiple>
+</div>
+</div>
+                <div id="bar">
+<span>Moderate Diabetic Retinopathy</span> <div> <input class="bar" type="file" id="files" name="files" multiple>
+</div>
+</div>
+                <div id="bar">
+<span>Severe Diabetic Retinopathy</span> <div><input class="bar" type="file" id="files" name="files" multiple></div>
+</div>
+                <div id="bar">
+<span>Proliferative Diabetic Retinopathy</span> <div> <input class="bar" type="file" id="files" name="files" multiple>
+</div>
+</div>
+                <h3 style="color: white">Testing Trial Results:</h3>
+                <h5 style="color: white">KNN Trial Accuracy Results:
+                <div id="bar" class="knnTrialResults" style="display: flex; justify-content: center; align-items: center; padding-top: 10px; padding-bottom: 10px">
+                    <span>KNN Trial Accuracy Results: N/A</span>
+                </div>
+                <h5 style="color: white">CNN Trial Accuracy Results:
+
+                <div id="bar" class="cnnTrialResults" style="display: flex; flex-direction: column; justify-content: center; align-items: center; padding-top: 10px; padding-bottom: 10px">
+                    <span>CNN Trial Accuracy Results: N/A</span>
+                </div>
+
+            </h5>
+</h5>
+</div>
+
+
+
+            
+
+            <div class="column" style="width: 50%; padding:5px;">
+                <div id="bar" style=" align-items: flex-start; width: 100%; flex-direction: column;">
+                    <div id="inner" style="padding-right: 20px;padding-left: 20px; width: 100%; align-items: flex-start;flex-direction: column;">
+                        <h3 style="color: white">Neural Network Testing Process:</h3>
+                        <h6 style="color: white; flex-direction: row;">K-Nearest Neighbors Testing (KNN): <span id="percentage-1" style="background: #121212; display: inline-flex; width: auto; padding: 7px; margin-left: 10px; border-radius: 10px; font-size: 9px">0/0</span>
+</h6>
+                        <div style="height: 10px; border-radius: 10px; margin-bottom: 20px; width: calc(100% - 40px); overflow: hidden; background: #111111">
+                            <div id="loading-1" style="background-color: #00d6a1; border-radius: 10px; height: 10px; width: 00%"></div>
+                        </div>
+
+                        <h6 style="color: white; flex-direction: row;">Convolutional Neural Network Testing (CNN): <span id="percentage-2" style="background: #121212; display: inline-flex; width: auto; padding: 7px; margin-left: 10px; border-radius: 10px; font-size: 9px">0/0</span>
+</h6>
+                        <div style="height: 10px; border-radius: 10px; margin-bottom: 20px; width: calc(100% - 40px); overflow: hidden; background: #111111">
+                            <div id="loading-2" style="background-color: #00d6a1; border-radius: 10px; height: 10px; width: 0%"></div>
+                        </div>
+                    </div>
+                        
+                </div>
+
+                <div style="display: flex; justify-content: space-between;">
+                    <button onclick="test().run()" id="test" style="width: 49.5%; height: 40px; border-radius: 7.5px; margin:0; padding:0">RUN EXPERIMENT</button>
+                    <button onclick="test().reset()" id="button" style="width: 49.5%; height: 40px;  border-radius: 7.5px;  margin:0; padding:0">RESET</button>
+                </div>
+
+
+                <h3 style="color: white">Individual Algorithmic Analysis:</h3>
+                <div id="bar" class="knnResults"><div class="knnResultsRight" style="flex-direction: column;width: 50%; display: flex; justify-content: center; align-items: center; text-align: center; color: white !important"><span>KNN Graphical Analysis: N/A</span></div></div>
+                <div id="bar" class="cnnResults"><div class="cnnResultsRight" style="flex-direction: column;width: 50%; display: flex; justify-content: center; align-items: center; text-align: center; color: white !important"><span>CNN Graphical Analysis: N/A</span></div></div>
+                <h3 style="color: white">Comparative Analysis:</h3>
+                <div id="bar" class="trialResults"><span>Comparative Analysis: N/A</span></div>
+
+                <button onclick="test().downloadGraph('knngraph.png', knnChartDL)"></button>
+                <button onclick="test().downloadGraph('cnngraph.png', cnnChartDL)"></button>
+                <button onclick="test().downloadGraph('linegraph.png', lineChartDL)"></button>
+
+                <img id="preview" width="250px">
+                
+            </div>
+        </div>
+
+        <div class="hiddenGraphs" style="display: none">
+
+        </div>
+    </body>
+</html>
